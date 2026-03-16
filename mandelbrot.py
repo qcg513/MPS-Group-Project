@@ -62,7 +62,7 @@ def compute_line(y):
 
 	for x in range(width):
 		c = pygame.math.Vector2(display_to_world(x,y))
-		z = c.copy()
+		z = c.copy()	# Copy the value of c into z to skip the first iteration
 
 		count = 0
 		out_of_bounds = False
@@ -143,8 +143,8 @@ while running:
 		# While there is still time left in the frame, the program calculates the pixels for successive y-values
 		while (perf_counter() - start < (1/fps)):
 			end_y_val = width
-			if (end_y_val - line_num > 10): 
-				end_y_val = line_num + 10
+			if (end_y_val - line_num > batch_size): 
+				end_y_val = line_num + batch_size
 			
 			for y_val in range(line_num, end_y_val):
 				compute_line(y_val)
@@ -156,7 +156,7 @@ while running:
 				#print("Finished rendereing")
 				break
 
-	
+	# Scales the surface with the calculated pixels on it up by the scaling factor and then places it onto the window's surface
 	window.blit(pygame.transform.scale(surface, window.get_rect().size), (0, 0))
-	pygame.display.update()
-	clock.tick(fps)
+	pygame.display.update()	# Updates the display to show the new surface
+	clock.tick(fps)			# Limits the number of frames presented per second to the value of "fps"
