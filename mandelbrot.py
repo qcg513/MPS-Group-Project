@@ -22,16 +22,22 @@ cut_off = 2 			# The limit before a point is considered tend off to infinity
 batch_size = 50 		# The number of lines to calculate before checking the time
 
 def display_to_world(x, y):
+	# Calculates the coordinate in $\mathbb{R}^2$
 	return ((x / zoom) + top_left.x,
 			(y / zoom) - top_left.y)
 
 def iterate(z, c):
+	# Performs one iteration of the sequence defining the mandelbrot set
 	new_z = pygame.math.Vector2()
 	new_z.x = z.x * z.x - z.y * z.y + c.x
 	new_z.y = 2 * z.x * z.y + c.y
 	return new_z
 
 def colourise(iterations_to_leave):
+	# This function calculates the percentage of the maximum number of iterations that it took the point to leave the cutoff region.
+	# It then uses that to index into the rgb colour space in the same way that the bottom rainbow-colour slider works on this website: https://rgbcolorpicker.com/ 
+	# Note, this is not specific to this source, for extra reading, see https://en.wikipedia.org/wiki/HSL_and_HSV#HSV_to_RGB
+
 	depth = iterations_to_leave / max_iterations
 
 	if depth <= 1/6:
@@ -48,9 +54,7 @@ def colourise(iterations_to_leave):
 		return (251, 43, 251 - int(208 * 6 * (depth - 5/6)))
 
 def compute_line(y):
-	"""
-	Computes all the pixels on a specific y-level
-	"""
+	# Computes all the pixels for a specific y-level
 	global px_array
 
 	for x in range(width):
@@ -74,13 +78,12 @@ clock = pygame.time.Clock()
 fps = 5
 line_num = 0
 
-#print(iterate())
-
 running = True
 while running:
 	# The start time of the frame is used to determine when we should stop calculating new pixels and output the already-calculated ones to the display
 	start = perf_counter()
 
+	# This handles the various user inputs that the program should respond to
 	for event in pygame.event.get():
 		if event.type == pygame.QUIT:
 			running = False
@@ -109,6 +112,7 @@ while running:
 			else: print(event.key)
 
 	if line_num < width:
+		# While there is still time left in the frame, the program calculates the pixels for successive y-values
 		while (perf_counter() - start < (1/fps)):
 			end_y_val = width
 			if (end_y_val - line_num > 10): 
@@ -120,12 +124,11 @@ while running:
 			line_num = end_y_val
 			#print(f"Calculated up to y={end_y_val}")
 
-			if end_y_val == width: 
+			if end_y_val == width:
 				print("Finished rendereing")
 				break
 
 	
 	window.blit(pygame.transform.scale(surface, window.get_rect().size), (0, 0))
 	pygame.display.update()
-	#print("Updated display")
 	clock.tick(fps)
