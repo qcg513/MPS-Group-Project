@@ -1,17 +1,17 @@
 import pygame
 
 pygame.init()
-iterations = 8
+
+iterations = 8	
 screen = pygame.display.set_mode((3 ** iterations, 3 ** iterations))
 
-## Misc Functions ##
-
-save_on_exit = True
+save_on_exit = False
 def save():
 	pygame.image.save(screen, 'carpet.png')
 
 ## Creating the carpet ##
 
+# Unlike the mandelbrot set viewer, only two colours are required for the image of the carpet
 black = (0, 0, 0)
 white = (255, 255, 255)
 
