@@ -3,7 +3,7 @@ from time import perf_counter
 
 pygame.init()
 
-width = 401			# The number of pixels wide to calculate the mandelbrot set to
+width = 101			# The number of pixels wide to calculate the mandelbrot set to
 scaling_factor = 3  # The scaling factor from the number of pixels calculated to the actual display size of the window
 window = pygame.display.set_mode((scaling_factor * width, scaling_factor * width))
 
@@ -12,11 +12,16 @@ px_array = pygame.PixelArray(surface)
 
 # This is the world-space position of the top_left of the screen
 top_left = pygame.math.Vector2()
-top_left.xy = -1.5,1
+# top_left.xy = -1.5,1 	# A good starting point for the iterative fractals
+top_left.xy = 2,4 		# A good starting point for the lyapunov fractal
 zoom = (width - 1) // 2
 zooming_factor = 1.41	# The factor that the screen should zoom into when pressing either of the "-" or "=" buttons to zoom out and in respectively
 
-### Mandelbrot Settings ###
+# Determining which fractal to generate
+# ["mandelbrot", "julia", "burning ship", "lyapunov"]
+fractal_to_draw = 3 	# The index of the fractal that you wish to generate
+
+### Fractal Generator Settings ###
 save_on_exit = False	# Saves a the mandelbrot set image when the window is closed (if it is fully drawn)
 max_iterations = 50		# The number of iterations to check if a point stays within 
 cut_off = 2 			# The limit before a point is considered tend off to infinity
@@ -28,18 +33,46 @@ def display_to_world(x, y):
 	return ((x / zoom) + top_left.x,
 			-(y / zoom) + top_left.y)
 
-def burning_ship_iterate(z, c):
-	new_z = pygame.math.Vector2()
-	new_z.x = z.x * z.x - z.y * z.y + c.x
-	new_z.y = 2 * math.fabs(z.x * z.y) + c.y
-	return new_z
-
 def mandel_iterate(z, c):
 	# Performs one iteration of the sequence defining the mandelbrot set
 	new_z = pygame.math.Vector2()
 	new_z.x = z.x * z.x - z.y * z.y + c.x
 	new_z.y = 2 * z.x * z.y + c.y
 	return new_z
+
+julia_c = pygame.math.Vector2((0, 0))	# The constant for the julia set
+def julia_iterate(z):
+	return mandel_iterate(z, julia_c)
+
+def burning_ship_iterate(z, c):
+	# Performs an iteration defining the burning ship fractal, this is very similar to the mandelbrot set, except absolute value of the real and imaginary components of z are used instead.
+	new_z = pygame.math.Vector2()
+	new_z.x = z.x * z.x - z.y * z.y + c.x
+	new_z.y = 2 * math.fabs(z.x * z.y) + c.y
+	return new_z
+
+sequence = 'AB'
+def lyapunov_sequence_index(n):
+	# Indexes into the sequences of A's and B's
+	# Returns True for an A and False for a B
+	return sequence[(n+1) % len(sequence)] == 'A' 
+
+def lyapunov_pixel_calc(z):
+	total = 0
+	x = 0.5
+	failed = False
+	for n in range(max_iterations):
+		r_n = z.x if lyapunov_sequence_index(n) else z.y
+		x = r_n * x * (1 - x)
+		if math.fabs(x) == 1/2:
+			failed = True
+			print(f"Failed on iteration {n} of point {z.x},{z.y}")
+			break
+
+		total += math.log(math.fabs(r_n * (1 - 2 * x)))
+
+	print(f"At point ({z.x},{z.y}) value: {total}")
+	return failed, total
 
 def colourise(iterations_to_leave):
 	# This function calculates the percentage of the maximum number of iterations that it took the point to leave the cutoff region.
@@ -61,20 +94,38 @@ def colourise(iterations_to_leave):
 	else:
 		return (251, 43, 251 - int(208 * 6 * (depth - 5/6)))
 
+def compute_pixel_iterative(c) -> int:
+	z = c.copy()	# Copy the value of c into z to skip the first iteration
+	count = 0
+	out_of_bounds = False
+	while (not out_of_bounds) and (count < max_iterations):
+		match fractal_to_draw:
+			case 0:
+				# Drawing the mandelbrot set
+				z = mandel_iterate(z, c)
+			case 1:
+				# Drawing the Julia set
+				z = julia_iterate(z)
+			case 2:
+				# Drawing the burning ship
+				z = burning_ship_iterate(z, c)
+
+		out_of_bounds = (math.fabs(z.x) > cut_off) or (math.fabs(z.y) > cut_off)
+		count += 1
+
+	return (out_of_bounds, count)
+
 def compute_line(y):
 	# Computes all the pixels for a specific y-level
 	global px_array
 
 	for x in range(width):
 		c = pygame.math.Vector2(display_to_world(x,y))
-		z = c.copy()	# Copy the value of c into z to skip the first iteration
-
-		count = 0
-		out_of_bounds = False
-		while (not out_of_bounds) and (count < max_iterations):
-			z = burning_ship_iterate(z, c)	# This function call can be substituted with any of the iteration techniques and will work
-			out_of_bounds = (math.fabs(z.x) > cut_off) or (math.fabs(z.y) > cut_off)
-			count += 1
+		
+		if fractal_to_draw == 3:
+			out_of_bounds, count = lyapunov_pixel_calc(c)
+			
+		else: out_of_bounds, count = compute_pixel_iterative(c)
 
 		if out_of_bounds:	px_array[x,y] = colourise(count)
 		else: 				px_array[x,y] = (0, 0, 0)
@@ -158,7 +209,7 @@ while running:
 			#print(f"Calculated up to y={end_y_val}")
 
 			if end_y_val == width:
-				#print("Finished rendereing")
+				print("Finished rendereing")
 				break
 
 	# Scales the surface with the calculated pixels on it up by the scaling factor and then places it onto the window's surface
