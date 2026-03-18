@@ -1,11 +1,10 @@
-import pygame
-from math import fabs
+import pygame, math
 from time import perf_counter
 
 pygame.init()
 
-width = 201			# The number of pixels wide to calculate the mandelbrot set to
-scaling_factor = 6  # The scaling factor from the number of pixels calculated to the actual display size of the window
+width = 401			# The number of pixels wide to calculate the mandelbrot set to
+scaling_factor = 3  # The scaling factor from the number of pixels calculated to the actual display size of the window
 window = pygame.display.set_mode((scaling_factor * width, scaling_factor * width))
 
 surface = pygame.Surface((width, width))
@@ -29,7 +28,13 @@ def display_to_world(x, y):
 	return ((x / zoom) + top_left.x,
 			-(y / zoom) + top_left.y)
 
-def iterate(z, c):
+def burning_ship_iterate(z, c):
+	new_z = pygame.math.Vector2()
+	new_z.x = z.x * z.x - z.y * z.y + c.x
+	new_z.y = 2 * math.fabs(z.x * z.y) + c.y
+	return new_z
+
+def mandel_iterate(z, c):
 	# Performs one iteration of the sequence defining the mandelbrot set
 	new_z = pygame.math.Vector2()
 	new_z.x = z.x * z.x - z.y * z.y + c.x
@@ -67,8 +72,8 @@ def compute_line(y):
 		count = 0
 		out_of_bounds = False
 		while (not out_of_bounds) and (count < max_iterations):
-			z = iterate(z, c)
-			out_of_bounds = (fabs(z.x) > cut_off) or (fabs(z.y) > cut_off)
+			z = burning_ship_iterate(z, c)	# This function call can be substituted with any of the iteration techniques and will work
+			out_of_bounds = (math.fabs(z.x) > cut_off) or (math.fabs(z.y) > cut_off)
 			count += 1
 
 		if out_of_bounds:	px_array[x,y] = colourise(count)
