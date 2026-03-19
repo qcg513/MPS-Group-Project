@@ -3,8 +3,8 @@ from time import perf_counter
 
 pygame.init()
 
-width = 101			# The number of pixels wide to calculate the mandelbrot set to
-scaling_factor = 3  # The scaling factor from the number of pixels calculated to the actual display size of the window
+width = 601			# The number of pixels wide to calculate the mandelbrot set to
+scaling_factor = 2  # The scaling factor from the number of pixels calculated to the actual display size of the window
 window = pygame.display.set_mode((scaling_factor * width, scaling_factor * width))
 
 surface = pygame.Surface((width, width))
@@ -51,6 +51,8 @@ def burning_ship_iterate(z, c):
 	new_z.y = 2 * math.fabs(z.x * z.y) + c.y
 	return new_z
 
+# The lyapunov fractals are a strange family of fractals defined by a sequences of A's and B's
+# Further reading: https://en.wikipedia.org/wiki/Lyapunov_fractal
 sequence = 'AB'
 def lyapunov_sequence_index(n):
 	# Indexes into the sequences of A's and B's
@@ -60,19 +62,19 @@ def lyapunov_sequence_index(n):
 def lyapunov_pixel_calc(z):
 	total = 0
 	x = 0.5
-	failed = False
+
 	for n in range(max_iterations):
 		r_n = z.x if lyapunov_sequence_index(n) else z.y
 		x = r_n * x * (1 - x)
 		if math.fabs(x) == 1/2:
-			failed = True
-			print(f"Failed on iteration {n} of point {z.x},{z.y}")
+			#print(f"Failed on iteration {n} of point {z.x},{z.y}")
 			break
 
 		total += math.log(math.fabs(r_n * (1 - 2 * x)))
 
-	print(f"At point ({z.x},{z.y}) value: {total}")
-	return failed, total
+	#print(f"At point ({z.x},{z.y}) value: {total}")
+
+	return True, ((total / 200) + 0.5) * max_iterations 
 
 def colourise(iterations_to_leave):
 	# This function calculates the percentage of the maximum number of iterations that it took the point to leave the cutoff region.
@@ -81,7 +83,9 @@ def colourise(iterations_to_leave):
 
 	depth = iterations_to_leave / max_iterations
 
-	if depth <= 1/6:
+	if depth <= 0:
+		return (255, 255, 255)
+	elif depth <= 1/6:
 		return (251, 43 + int(208 * (6 * depth)), 43)
 	elif depth <= 2/6:
 		return (251 - int(208 * 6 * (depth - 1/6)), 251, 43)
@@ -91,8 +95,10 @@ def colourise(iterations_to_leave):
 		return (43, 251 - int(208 * 6 * (depth - 3/6)), 251)
 	elif depth <= 5/6:
 		return (43 + int(208 * 6 * (depth - 4/6)), 43, 251)
-	else:
+	elif depth <= 1:
 		return (251, 43, 251 - int(208 * 6 * (depth - 5/6)))
+	else:
+		return (0, 0, 0)
 
 def compute_pixel_iterative(c) -> int:
 	z = c.copy()	# Copy the value of c into z to skip the first iteration
