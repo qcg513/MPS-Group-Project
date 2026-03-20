@@ -1,24 +1,20 @@
-import pygame, math
+import pygame
+import math
+import argparse		# A library for parsing command-line arguments
 from time import perf_counter
 
-pygame.init()
+##### Initial Setup of Variables #####
 
 width = 601			# The number of pixels wide to calculate the mandelbrot set to
 scaling_factor = 2  # The scaling factor from the number of pixels calculated to the actual display size of the window
-window = pygame.display.set_mode((scaling_factor * width, scaling_factor * width))
-
-surface = pygame.Surface((width, width))
-px_array = pygame.PixelArray(surface)
 
 # This is the world-space position of the top_left of the screen
 top_left = pygame.math.Vector2()
-# top_left.xy = -1.5,1 	# A good starting point for the iterative fractals
-top_left.xy = 2,4 		# A good starting point for the lyapunov fractal
-zoom = (width - 1) // 2
+zoom = 0
 zooming_factor = 1.41	# The factor that the screen should zoom into when pressing either of the "-" or "=" buttons to zoom out and in respectively
 
 # Determining which fractal to generate
-# ["mandelbrot", "julia", "burning ship", "lyapunov"]
+fractals_available = ["mandelbrot", "julia", "burning_ship", "lyapunov"]
 fractal_to_draw = 3 	# The index of the fractal that you wish to generate
 
 ### Fractal Generator Settings ###
@@ -26,6 +22,61 @@ save_on_exit = False	# Saves a the mandelbrot set image when the window is close
 max_iterations = 50		# The number of iterations to check if a point stays within 
 cut_off = 2 			# The limit before a point is considered tend off to infinity
 batch_size = 5 		# The number of lines to calculate before checking the time
+file_name = "fractal.png"
+
+##### Argument Parsing #####
+
+if (__name__ == "__main__"):
+	### Initialize the argument parser and add the arguments
+	parser = argparse.ArgumentParser(description="A fractal generating script")
+	
+	parser.add_argument("--s",
+		type=str,
+		default="False",
+		choices=["True", "False"], 
+		help="Whether or not to save the rendered image to a file"
+	)
+	parser.add_argument("--file",
+		type=str,
+		default=file_name,
+		help="The filename to save the image with"
+	)
+	parser.add_argument("--fractal",
+		type=str,
+		default="mandelbrot",
+		choices=fractals_available,
+		help="The fractal to draw"
+	)
+	parser.add_argument("--pixel_width",
+		type=int,
+		default=width,
+		help="The width in pixels of the calculated image"
+	)
+
+	args = parser.parse_args()
+
+	save_on_exit = True if (args.s == "True") else False
+	file_name = args.file
+	fractal_to_draw = fractals_available.index(args.fractal)
+	width=args.pixel_width
+	zoom = (width - 1) // 2 	# Calculate the zoom once the width has been set
+
+	if (fractal_to_draw == 3):
+		top_left.xy = 2,4 		# A good starting point for the lyapunov fractal
+	else:
+		top_left.xy = -1.5,1 	# A good starting point for the iterative fractals
+
+##### Initializing the Pygame Environment
+
+pygame.init()				# Initialize the pygame module
+clock = pygame.time.Clock()	# Initialize the clock to provide consistent frame-times
+fps = 10
+
+window = pygame.display.set_mode((scaling_factor * width, scaling_factor * width))
+surface = pygame.Surface((width, width))
+px_array = pygame.PixelArray(surface)
+
+##### Function Definitions #####
 
 def display_to_world(x, y):
 	# Translates from the screen position space to the complex plane that the program uses to calculate the colours of the pixels.
@@ -139,16 +190,15 @@ def compute_line(y):
 def save():
 	pygame.image.save(surface, 'mandelbrot.png')
 
-clock = pygame.time.Clock()
-fps = 10
-line_num = 0
+
+##### The Main Loop of the Renderer #####
 
 running = True
+line_num = 0
 while running:
 	# The start time of the frame is used to determine when we should stop calculating new pixels and output the already-calculated ones to the display
 	start = perf_counter()
 
-	
 	world_screen_width = (width - 1) / zoom 	# The width of the complex plane displayed
 	
 	# This handles the various user inputs that the program should respond to
