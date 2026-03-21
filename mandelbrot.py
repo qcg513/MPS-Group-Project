@@ -6,7 +6,7 @@ from time import perf_counter
 ##### Initial Setup of Variables #####
 
 width = 601			# The number of pixels wide to calculate the mandelbrot set to
-scaling_factor = 2  # The scaling factor from the number of pixels calculated to the actual display size of the window
+scaling_factor = 6  # The scaling factor from the number of pixels calculated to the actual display size of the window
 
 # This is the world-space position of the top_left of the screen
 top_left = pygame.math.Vector2()
@@ -110,6 +110,10 @@ def lyapunov_sequence_index(n):
 	# Returns True for an A and False for a B
 	return sequence[(n+1) % len(sequence)] == 'A' 
 
+def lyapunov_map(lam):
+	# This function maps the values of lambda that exist in (-\infty, \infty) to (0, 1) so that they can be coloured correctly
+	return 0.5 * (1 + math.sin(math.atan(lam / 100)))
+
 def lyapunov_pixel_calc(z):
 	total = 0
 	x = 0.5
@@ -125,14 +129,11 @@ def lyapunov_pixel_calc(z):
 
 	#print(f"At point ({z.x},{z.y}) value: {total}")
 
-	return True, ((total / 200) + 0.5) * max_iterations 
+	return True, lyapunov_map(total)
 
-def colourise(iterations_to_leave):
-	# This function calculates the percentage of the maximum number of iterations that it took the point to leave the cutoff region.
-	# It then uses that to index into the rgb colour space in the same way that the bottom rainbow-colour slider works on this website: https://rgbcolorpicker.com/ 
+def colourise(depth):
+	# This function uses the depth to index into the rgb colour space in the same way that the bottom rainbow-colour slider works on this website: https://rgbcolorpicker.com/ 
 	# Note, this is not specific to this source, for extra reading, see https://en.wikipedia.org/wiki/HSL_and_HSV#HSV_to_RGB
-
-	depth = iterations_to_leave / max_iterations
 
 	if depth <= 0:
 		return (255, 255, 255)
@@ -170,7 +171,7 @@ def compute_pixel_iterative(c) -> int:
 		out_of_bounds = (math.fabs(z.x) > cut_off) or (math.fabs(z.y) > cut_off)
 		count += 1
 
-	return (out_of_bounds, count)
+	return (out_of_bounds, count / max_iterations)
 
 def compute_line(y):
 	# Computes all the pixels for a specific y-level
@@ -180,11 +181,11 @@ def compute_line(y):
 		c = pygame.math.Vector2(display_to_world(x,y))
 		
 		if fractal_to_draw == 3:
-			out_of_bounds, count = lyapunov_pixel_calc(c)
+			out_of_bounds, depth = lyapunov_pixel_calc(c)
 			
-		else: out_of_bounds, count = compute_pixel_iterative(c)
+		else: out_of_bounds, depth = compute_pixel_iterative(c)
 
-		if out_of_bounds:	px_array[x,y] = colourise(count)
+		if out_of_bounds:	px_array[x,y] = colourise(depth)
 		else: 				px_array[x,y] = (0, 0, 0)
 
 def save():
