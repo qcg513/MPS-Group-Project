@@ -19,7 +19,7 @@ python3 mandelbrot.py --s True --fractal mandelbrot --pixel_width 6400
 
 ## 1.4.2 Lyapunov fractals
 
-Yep, they're fractals
+The two fractals in this section were generated with the following command, changing the `sequence` variable to the respective values inbetween.
 
 ```
 python3 mandelbrot.py --s True --fractal "lyapunov" --file "lyapunov.png" --pixel_width 6
