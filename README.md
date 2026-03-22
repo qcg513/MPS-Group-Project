@@ -21,6 +21,11 @@ python3 mandelbrot.py --s True --fractal mandelbrot --pixel_width 6400
 
 Yep, they're fractals
 
+```
+python3 mandelbrot.py --s True --fractal "lyapunov" --file "lyapunov.png" --pixel_width 6
+400
+```
+
 ## AI Usage
 
 None of the code found in this repository was created using Artificial Intelligence of any sort, this includes writing, editing and debugging.

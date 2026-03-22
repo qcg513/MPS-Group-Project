@@ -6,7 +6,7 @@ from time import perf_counter
 ##### Initial Setup of Variables #####
 
 width = 601			# The number of pixels wide to calculate the mandelbrot set to
-scaling_factor = 6  # The scaling factor from the number of pixels calculated to the actual display size of the window
+scaling_factor = 1  # The scaling factor from the number of pixels calculated to the actual display size of the window
 
 # This is the world-space position of the top_left of the screen
 top_left = pygame.math.Vector2()
@@ -19,7 +19,7 @@ fractal_to_draw = 3 	# The index of the fractal that you wish to generate
 
 ### Fractal Generator Settings ###
 save_on_exit = False	# Saves a the mandelbrot set image when the window is closed (if it is fully drawn)
-max_iterations = 50		# The number of iterations to check if a point stays within 
+max_iterations = 100	# The number of iterations to check if a point stays within 
 cut_off = 2 			# The limit before a point is considered tend off to infinity
 batch_size = 5 		# The number of lines to calculate before checking the time
 file_name = "fractal.png"
@@ -104,7 +104,7 @@ def burning_ship_iterate(z, c):
 
 # The lyapunov fractals are a strange family of fractals defined by a sequences of A's and B's
 # Further reading: https://en.wikipedia.org/wiki/Lyapunov_fractal
-sequence = 'AB'
+sequence = 'AABAB'
 def lyapunov_sequence_index(n):
 	# Indexes into the sequences of A's and B's
 	# Returns True for an A and False for a B
@@ -189,7 +189,7 @@ def compute_line(y):
 		else: 				px_array[x,y] = (0, 0, 0)
 
 def save():
-	pygame.image.save(surface, 'mandelbrot.png')
+	pygame.image.save(surface, file_name)
 
 
 ##### The Main Loop of the Renderer #####
